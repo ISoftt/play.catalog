@@ -5,6 +5,7 @@
     <Version>1.0.1</Version>
     <IsPackable>true</IsPackable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageDescription>The catalog contract used by Play Economy services.</PackageDescription>
   </PropertyGroup>
 
 </Project>
