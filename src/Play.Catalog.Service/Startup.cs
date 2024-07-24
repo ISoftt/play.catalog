@@ -1,6 +1,3 @@
-using MassTransit;
-using MassTransit.Definition;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -8,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Play.Catalog.Service.Entities;
+using Play.Common.HealthChecks;
 using Play.Common.Identity;
 using Play.Common.MassTransit;
 using Play.Common.MongoDB;
@@ -35,7 +33,7 @@ namespace Play.Catalog.Service
 
             services.AddMongo()
                     .AddMongoRepository<Item>("items")
-                    .AddMassTransitWithRabbitMq()
+                    .AddMassTransitWithMessageBroker(Configuration)
                     .AddJwtBearerAuthentication();
 
             services.AddAuthorization(options =>
@@ -50,7 +48,7 @@ namespace Play.Catalog.Service
                 {
                     policy.RequireRole("Admin");
                     policy.RequireClaim("scope", "catalog.writeaccess", "catalog.fullaccess");
-                });                
+                });
             });
 
             services.AddControllers(options =>
@@ -62,6 +60,9 @@ namespace Play.Catalog.Service
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Play.Catalog.Service", Version = "v1" });
             });
+
+            services.AddHealthChecks()
+                    .AddMongoDb();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -78,7 +79,7 @@ namespace Play.Catalog.Service
                     builder.WithOrigins(Configuration[AllowedOriginSetting])
                         .AllowAnyHeader()
                         .AllowAnyMethod();
-                });                
+                });
             }
 
             app.UseHttpsRedirection();
@@ -91,6 +92,7 @@ namespace Play.Catalog.Service
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapPlayEconomyHealthChecks();
             });
         }
     }
